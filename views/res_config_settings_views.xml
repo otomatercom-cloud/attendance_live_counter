@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_attendance_live_counter" model="ir.ui.view">
+        <field name="name">res.config.settings.form.attendance.live.counter</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="90"/>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//app[@name='hr_attendance']" position="inside">
+                <block title="Live Attendance Counter" name="attendance_live_counter_setting_container">
+                    <setting string="Required Working Hours" company_dependent="1"
+                             help="Default daily target working hours, used unless an employee has their own override.">
+                        <field name="attendance_target_hours"/>
+                    </setting>
+                    <setting string="Office Start Time" company_dependent="1"
+                             help="Official office start time, used to detect late arrivals.">
+                        <field name="attendance_office_start_time" widget="float_time"/>
+                    </setting>
+                    <setting string="eSSL Sync Secret"
+                             help="Shared secret required from the eTimeTrackLite bridge script when syncing biometric punches.">
+                        <field name="essl_sync_secret" password="True" placeholder="Set a long random value..."/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

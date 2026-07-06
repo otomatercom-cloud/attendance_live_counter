@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="attendance_live_counter.Dashboard">
+        <div class="o_alc_root">
+
+            <div t-if="state.loading" class="o_alc_loading">
+                <i class="fa fa-circle-o-notch fa-spin"/> Loading attendance...
+            </div>
+
+            <div t-elif="state.error and !state.data" class="o_alc_error alert alert-danger">
+                <i class="fa fa-exclamation-triangle"/> <t t-esc="state.error"/>
+            </div>
+
+            <div t-else="" t-att-class="'o_alc_card o_alc_status_' + statusColor">
+
+                <div class="o_alc_card_header">
+                    <div class="o_alc_employee">
+                        <i class="fa fa-user-circle o_alc_employee_icon"/>
+                        <div class="o_alc_employee_meta">
+                            <div class="o_alc_employee_name" t-esc="state.data.employee_name"/>
+                            <div class="o_alc_status_badge">
+                                <span class="o_alc_status_dot"/>
+                                <span t-esc="statusLabel"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="o_alc_clock">
+                        <i class="fa fa-clock-o"/>
+                        <span t-esc="currentTimeLabel"/>
+                    </div>
+                </div>
+
+                <div class="o_alc_timer_display">
+                    <div class="o_alc_timer_label">Worked Today</div>
+                    <AttendanceTimer
+                        checkIn="state.data.check_in"
+                        checkOut="state.data.check_out"
+                        state="state.data.state"
+                        serverOffsetMs="serverOffsetMs"
+                        size="'lg'"/>
+                </div>
+
+                <div class="o_alc_progress_wrap">
+                    <div class="o_alc_progress_header">
+                        <span>Today's Progress</span>
+                        <span t-esc="progressLabel"/>
+                    </div>
+                    <div class="o_alc_progress_bar">
+                        <div class="o_alc_progress_fill" t-att-style="'width:' + progressPct + '%'"/>
+                    </div>
+                    <div class="o_alc_progress_pct">
+                        <span t-esc="progressPctLabel"/>
+                    </div>
+                </div>
+
+                <div class="o_alc_stats_grid">
+                    <div class="o_alc_stat">
+                        <div class="o_alc_stat_label"><i class="fa fa-sign-in"/> Check In</div>
+                        <div class="o_alc_stat_value" t-esc="checkInLabel"/>
+                    </div>
+                    <div class="o_alc_stat">
+                        <div class="o_alc_stat_label"><i class="fa fa-sign-out"/> Check Out</div>
+                        <div class="o_alc_stat_value" t-esc="checkOutLabel"/>
+                    </div>
+                    <div class="o_alc_stat">
+                        <div class="o_alc_stat_label"><i class="fa fa-bullseye"/> Required Hours</div>
+                        <div class="o_alc_stat_value" t-esc="targetHoursLabel"/>
+                    </div>
+                    <div class="o_alc_stat">
+                        <div class="o_alc_stat_label"><i class="fa fa-hourglass-half"/> Remaining</div>
+                        <div class="o_alc_stat_value" t-esc="remainingLabel"/>
+                    </div>
+                    <div class="o_alc_stat" t-if="overtimeMs > 0">
+                        <div class="o_alc_stat_label"><i class="fa fa-fire"/> Overtime</div>
+                        <div class="o_alc_stat_value o_alc_text_overtime" t-esc="overtimeLabel"/>
+                    </div>
+                    <div class="o_alc_stat" t-if="lateLabel">
+                        <div class="o_alc_stat_label"><i class="fa fa-exclamation-circle"/> Late By</div>
+                        <div class="o_alc_stat_value o_alc_text_warning" t-esc="lateLabel"/>
+                    </div>
+                    <div class="o_alc_stat" t-if="leftEarlyLabel">
+                        <div class="o_alc_stat_label"><i class="fa fa-arrow-left"/> Left Early</div>
+                        <div class="o_alc_stat_value o_alc_text_warning" t-esc="leftEarlyLabel"/>
+                    </div>
+                </div>
+
+                <div class="o_alc_actions">
+                    <button t-if="!isCheckedIn"
+                            class="btn btn-primary o_alc_btn_checkin"
+                            t-att-disabled="state.actionPending"
+                            t-on-click="onCheckIn">
+                        <i class="fa fa-sign-in"/> Check In
+                    </button>
+                    <button t-if="isCheckedIn"
+                            class="btn btn-danger o_alc_btn_checkout"
+                            t-att-disabled="state.actionPending"
+                            t-on-click="onCheckOut">
+                        <i class="fa fa-sign-out"/> Check Out
+                    </button>
+                </div>
+
+                <div t-if="state.error" class="o_alc_inline_error alert alert-warning mt-2">
+                    <t t-esc="state.error"/>
+                </div>
+
+            </div>
+        </div>
+    </t>
+
+</templates>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_view_form_attendance_live_counter" model="ir.ui.view">
+        <field name="name">hr.employee.form.attendance.live.counter</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//notebook" position="inside">
+                <page string="Live Attendance" name="attendance_live_counter">
+                    <group>
+                        <group string="Targets (leave at 0 to use company default)">
+                            <field name="attendance_target_hours"/>
+                            <field name="attendance_office_start_time" widget="float_time"/>
+                        </group>
+                        <group string="Biometric Device">
+                            <field name="attendance_device_id"/>
+                        </group>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="attendance_live_counter.AttendanceTimer">
+        <span t-att-class="'o_alc_timer o_alc_timer_' + props.size">
+            <t t-esc="formatted"/>
+        </span>
+    </t>
+
+</templates>

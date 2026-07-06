@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_attendance_live_counter_dashboard" model="ir.actions.client">
+        <field name="name">Live Attendance</field>
+        <field name="tag">attendance_live_counter.dashboard</field>
+    </record>
+
+    <!-- Standalone top-level menu, deliberately NOT nested under
+         hr_attendance.menu_hr_attendance_root: that root menu (and every
+         item under it) requires hr_attendance.group_hr_attendance_officer,
+         which ordinary employees do not have. This widget is a personal
+         "my own attendance" tool every employee should be able to reach,
+         so it gets its own app entry visible to any internal user. -->
+    <menuitem id="menu_attendance_live_counter_root"
+              name="Live Attendance"
+              action="action_attendance_live_counter_dashboard"
+              groups="base.group_user"
+              web_icon="attendance_live_counter,static/description/icon.png"
+              sequence="206"/>
+</odoo>

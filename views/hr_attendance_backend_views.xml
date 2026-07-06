@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Configuration parent menu, restricted to attendance officers/managers.
+         Nested under our own broadly-visible root menu (see
+         attendance_dashboard_views.xml) - the root itself stays visible to
+         every internal user, only this branch is narrowed. -->
+    <menuitem id="menu_attendance_live_counter_configuration"
+              name="Configuration"
+              parent="menu_attendance_live_counter_root"
+              groups="hr_attendance.group_hr_attendance_officer"
+              sequence="90"/>
+
+    <!-- ============================================================ -->
+    <!-- Employee Targets: bulk-editable list of required hours /      -->
+    <!-- office start time, one screen for every employee instead of   -->
+    <!-- opening each employee form individually.                      -->
+    <!-- ============================================================ -->
+    <record id="hr_employee_view_list_attendance_targets" model="ir.ui.view">
+        <field name="name">hr.employee.list.attendance.targets</field>
+        <field name="model">hr.employee</field>
+        <field name="arch" type="xml">
+            <list string="Employee Attendance Targets" editable="bottom">
+                <field name="name"/>
+                <field name="department_id" optional="show"/>
+                <field name="attendance_device_id"/>
+                <field name="attendance_target_hours"/>
+                <field name="attendance_office_start_time" widget="float_time"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="hr_employee_action_attendance_targets" model="ir.actions.act_window">
+        <field name="name">Employee Attendance Targets</field>
+        <field name="res_model">hr.employee</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="hr_employee_view_list_attendance_targets"/>
+        <field name="context">{}</field>
+        <field name="help">
+            Set the Required Working Hours and Office Start Time for each
+            employee here. Leaving a value at 0 falls back to the company
+            default (Settings &gt; Attendances).
+        </field>
+    </record>
+
+    <menuitem id="menu_attendance_live_counter_targets"
+              name="Employee Targets"
+              parent="menu_attendance_live_counter_configuration"
+              action="hr_employee_action_attendance_targets"
+              sequence="10"/>
+
+    <!-- ============================================================ -->
+    <!-- All Attendances: every employee's check-in / check-out times, -->
+    <!-- editable directly, so HR can manually correct or set someone's -->
+    <!-- timing without going through the kiosk or the live widget.     -->
+    <!-- ============================================================ -->
+    <record id="hr_attendance_view_search_attendance_live_counter" model="ir.ui.view">
+        <field name="name">hr.attendance.search.attendance.live.counter</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <search string="Attendances">
+                <field name="employee_id"/>
+                <filter string="Today" name="filter_today"
+                        domain="[('check_in', '>=', datetime.datetime.combine(context_today(), datetime.time(0, 0, 0)))]"/>
+                <filter string="Late Arrivals" name="filter_late" domain="[('is_late', '=', True)]"/>
+                <filter string="Left Early" name="filter_left_early" domain="[('is_left_early', '=', True)]"/>
+                <separator/>
+                <filter string="Group By Employee" name="group_employee" context="{'group_by': 'employee_id'}"/>
+            </search>
+        </field>
+    </record>
+
+    <record id="hr_attendance_view_list_attendance_live_counter" model="ir.ui.view">
+        <field name="name">hr.attendance.list.attendance.live.counter</field>
+        <field name="model">hr.attendance</field>
+        <field name="arch" type="xml">
+            <list string="All Attendances" editable="bottom"
+                  decoration-danger="is_late" decoration-warning="is_left_early">
+                <field name="employee_id"/>
+                <field name="check_in"/>
+                <field name="check_out"/>
+                <field name="worked_hours" widget="float_time"/>
+                <field name="is_late" optional="show"/>
+                <field name="late_duration" widget="float_time" optional="show"/>
+                <field name="is_left_early" optional="show"/>
+                <field name="left_early_duration" widget="float_time" optional="show"/>
+                <field name="device_ref_in" optional="hide"/>
+                <field name="device_ref_out" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="hr_attendance_action_all_records" model="ir.actions.act_window">
+        <field name="name">All Attendances</field>
+        <field name="res_model">hr.attendance</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="hr_attendance_view_list_attendance_live_counter"/>
+        <field name="search_view_id" ref="hr_attendance_view_search_attendance_live_counter"/>
+        <field name="context">{'search_default_filter_today': 1}</field>
+        <field name="help">
+            View and manually set every employee's check-in / check-out
+            timing. Late arrivals are highlighted in red, early check-outs
+            in orange.
+        </field>
+    </record>
+
+    <menuitem id="menu_attendance_live_counter_all_attendances"
+              name="All Attendances"
+              parent="menu_attendance_live_counter_configuration"
+              action="hr_attendance_action_all_records"
+              sequence="20"/>
+
+</odoo>
