@@ -85,7 +85,7 @@
                     </div>
                 </div>
 
-                <div class="o_alc_actions">
+                <div class="o_alc_actions" t-if="allowManualCheckin">
                     <button t-if="!isCheckedIn"
                             class="btn btn-primary o_alc_btn_checkin"
                             t-att-disabled="state.actionPending"
@@ -98,6 +98,9 @@
                             t-on-click="onCheckOut">
                         <i class="fa fa-sign-out"/> Check Out
                     </button>
+                </div>
+                <div class="o_alc_manual_disabled_note" t-else="">
+                    <i class="fa fa-info-circle"/> Manual check-in/out is disabled - please use the biometric device.
                 </div>
 
                 <div t-if="state.error" class="o_alc_inline_error alert alert-warning mt-2">

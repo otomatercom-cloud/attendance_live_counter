@@ -124,10 +124,29 @@ class HrEmployee(models.Model):
             'is_left_early': bool(attendance.is_left_early) if attendance else False,
             'left_early_duration': attendance.left_early_duration if attendance else 0.0,
             'worked_hours_today': attendance.worked_hours if attendance else 0.0,
+            'allow_manual_checkin': self._can_manual_checkin(),
         }
+
+    def _can_manual_checkin(self):
+        """Whether the CURRENT user is allowed to use the self-service
+        Check In/Check Out buttons. Attendance Officers/Managers can
+        always use them (e.g. to help someone out); everyone else is
+        gated by the company-wide "Allow Manual Check In/Out" setting -
+        meant to be turned off once biometric sync is reliable, so
+        self-service punching can no longer be misused.
+        """
+        self.ensure_one()
+        if self.env.user.has_group('hr_attendance.group_hr_attendance_officer'):
+            return True
+        return bool(self.company_id.attendance_allow_manual_checkin)
 
     def action_attendance_check_in(self):
         self.ensure_one()
+        if not self._can_manual_checkin():
+            raise UserError(_(
+                'Manual check-in is disabled. Please use the biometric device to check in, '
+                'or ask an Attendance Officer to record it for you.'
+            ))
         employee = self.sudo()
         if employee.attendance_state == 'checked_in':
             raise UserError(_('%s is already checked in.') % self.name)
@@ -143,6 +162,11 @@ class HrEmployee(models.Model):
 
     def action_attendance_check_out(self):
         self.ensure_one()
+        if not self._can_manual_checkin():
+            raise UserError(_(
+                'Manual check-out is disabled. Please use the biometric device to check out, '
+                'or ask an Attendance Officer to record it for you.'
+            ))
         employee = self.sudo()
         if employee.attendance_state != 'checked_in':
             raise UserError(_('%s is not currently checked in.') % self.name)

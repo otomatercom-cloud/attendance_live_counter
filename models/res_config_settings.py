@@ -15,6 +15,11 @@ class ResConfigSettings(models.TransientModel):
         readonly=False,
         string='Default Office Start Time',
     )
+    attendance_allow_manual_checkin = fields.Boolean(
+        related='company_id.attendance_allow_manual_checkin',
+        readonly=False,
+        string='Allow Manual Check In/Out',
+    )
     essl_sync_secret = fields.Char(
         string='eSSL Sync Secret',
         config_parameter='attendance_live_counter.essl_sync_secret',

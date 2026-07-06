@@ -16,6 +16,10 @@
                              help="Official office start time, used to detect late arrivals.">
                         <field name="attendance_office_start_time" widget="float_time"/>
                     </setting>
+                    <setting string="Allow Manual Check In/Out" company_dependent="1"
+                             help="Turn off once biometric sync is reliable, to prevent employees from self-service punching - only the device (or an Attendance Officer) can then record attendance.">
+                        <field name="attendance_allow_manual_checkin"/>
+                    </setting>
                     <setting string="eSSL Sync Secret"
                              help="Shared secret required from the eTimeTrackLite bridge script when syncing biometric punches.">
                         <field name="essl_sync_secret" password="True" placeholder="Set a long random value..."/>

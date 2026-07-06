@@ -209,6 +209,10 @@ export class AttendanceDashboard extends Component {
         return !!(this.state.data && this.state.data.state === "checked_in");
     }
 
+    get allowManualCheckin() {
+        return !!(this.state.data && this.state.data.allow_manual_checkin);
+    }
+
     get progressLabel() {
         return `${formatHm(this.elapsedMs)} / ${formatHm(this.targetMs)}`;
     }

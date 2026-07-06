@@ -24,3 +24,12 @@ class ResCompany(models.Model):
         help='Official office start time, expressed as a float hour '
              '(e.g. 9.5 = 09:30 AM). Used to detect late arrivals.',
     )
+    attendance_allow_manual_checkin = fields.Boolean(
+        string='Allow Manual Check In/Out',
+        default=True,
+        help='When disabled, employees can no longer Check In/Check Out '
+             'themselves from the Live Attendance dashboard - only punches '
+             'from the biometric device (or manual entry by an Attendance '
+             'Officer/Manager) are accepted. Use this once biometric sync is '
+             'reliable, to prevent self-service misuse.',
+    )

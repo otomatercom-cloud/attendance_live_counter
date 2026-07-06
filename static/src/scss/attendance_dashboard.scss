@@ -210,6 +210,15 @@ $alc-grey: #9ca3af;
     font-size: 15px;
 }
 
+.o_alc_manual_disabled_note {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 13px;
+    padding: 10px 16px;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
 @keyframes alc-pulse {
     0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.5); }
     70% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
