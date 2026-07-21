@@ -110,10 +110,17 @@ class HrEmployee(models.Model):
         self.ensure_one()
         employee = self.sudo()
         attendance = self._today_attendance()
+        # Derived from the SAME today-scoped `attendance` record just
+        # fetched above, NOT employee.attendance_state - that raw core
+        # field reflects ANY open attendance record regardless of which
+        # day it started on, so a forgotten checkout from yesterday would
+        # otherwise make today's dashboard claim 'checked_in' while
+        # simultaneously showing no check-in time for today at all.
+        today_state = 'checked_in' if (attendance and not attendance.check_out) else 'checked_out'
         return {
             'employee_id': self.id,
             'employee_name': employee.name,
-            'state': employee.attendance_state or 'checked_out',
+            'state': today_state,
             'check_in': _to_iso_utc(attendance.check_in) if attendance else False,
             'check_out': _to_iso_utc(attendance.check_out) if attendance else False,
             'server_time': _to_iso_utc(fields.Datetime.now()),
@@ -148,16 +155,37 @@ class HrEmployee(models.Model):
                 'or ask an Attendance Officer to record it for you.'
             ))
         employee = self.sudo()
-        if employee.attendance_state == 'checked_in':
-            raise UserError(_('%s is already checked in.') % self.name)
-        # Delegate to the core, already-tested check-in/check-out toggle
-        # (hr_attendance.hr.employee._attendance_action_change) instead of
-        # duplicating hr.attendance create/write logic here - this is the
-        # exact same method the Attendance kiosk uses. sudo() is required
-        # because a plain employee has read-only access to hr.attendance
-        # (see hr_attendance_security.xml: group_hr_attendance_own_reader),
-        # scoped tightly to this single, already-resolved employee record.
-        employee._attendance_action_change()
+        today_attendance = self._today_attendance()
+        if today_attendance and not today_attendance.check_out:
+            raise UserError(_('%s is already checked in today.') % self.name)
+
+        stale_open = self.env['hr.attendance'].sudo().search([
+            ('employee_id', '=', employee.id), ('check_out', '=', False),
+        ], limit=1)
+        if stale_open:
+            # A forgotten checkout from a PREVIOUS day is still open.
+            # Don't let the core toggle below silently close it as part
+            # of today's check-in - that would misattribute today's
+            # arrival as yesterday's departure. Leave it open (it already
+            # surfaces as "Missed Clock Out" on the Attendance Exceptions
+            # dashboard, with a manual Check Out action there to close it
+            # properly) and create a fresh check-in for today directly.
+            self.env['hr.attendance'].sudo().create({
+                'employee_id': employee.id,
+                'check_in': fields.Datetime.now(),
+            })
+        else:
+            # Delegate to the core, already-tested check-in/check-out
+            # toggle (hr_attendance.hr.employee._attendance_action_change)
+            # instead of duplicating hr.attendance create/write logic here
+            # - this is the exact same method the Attendance kiosk uses.
+            # Safe here because we've just confirmed there's no open
+            # record at all. sudo() is required because a plain employee
+            # has read-only access to hr.attendance (see
+            # hr_attendance_security.xml: group_hr_attendance_own_reader),
+            # scoped tightly to this single, already-resolved employee
+            # record.
+            employee._attendance_action_change()
         return self.get_attendance_dashboard_data()
 
     def action_attendance_check_out(self):
@@ -167,10 +195,14 @@ class HrEmployee(models.Model):
                 'Manual check-out is disabled. Please use the biometric device to check out, '
                 'or ask an Attendance Officer to record it for you.'
             ))
-        employee = self.sudo()
-        if employee.attendance_state != 'checked_in':
-            raise UserError(_('%s is not currently checked in.') % self.name)
-        employee._attendance_action_change()
+        today_attendance = self._today_attendance()
+        if not today_attendance or today_attendance.check_out:
+            raise UserError(_(
+                '%s has no open check-in for TODAY to check out from. If a previous '
+                'day was left open by mistake, close it from the Attendance Exceptions '
+                'dashboard instead (Currently Checked In > Check Out).'
+            ) % self.name)
+        self.sudo()._attendance_action_change()
         return self.get_attendance_dashboard_data()
 
     # --- "My attendance" convenience wrappers ----------------------------------
@@ -278,7 +310,30 @@ class HrEmployee(models.Model):
             ('check_out', '=', False),
         ], order='check_in desc', limit=1)
 
-        if open_attendance and punch_dt > open_attendance.check_in:
+        is_stale = False
+        if open_attendance:
+            # A punch should only ever close TODAY's own open session. If
+            # the open record started on an EARLIER calendar day (in the
+            # employee's own local time - NOT the calling API user's,
+            # since sync_essl_punch is called by the bridge's admin
+            # account, not the employee), it's a forgotten checkout from
+            # a previous day. Silently closing it with today's punch
+            # would misattribute today's arrival as yesterday's
+            # departure - exactly the bug this guards against. Leave the
+            # stale record open instead (it already surfaces correctly
+            # as "Missed Clock Out" on the Attendance Exceptions
+            # dashboard, with a manual Check Out action to close it
+            # properly) and start a fresh check-in today.
+            tz_name = self.tz or self.user_id.tz or 'UTC'
+            try:
+                employee_tz = pytz.timezone(tz_name)
+            except pytz.UnknownTimeZoneError:
+                employee_tz = pytz.utc
+            open_check_in_local_date = pytz.utc.localize(open_attendance.check_in).astimezone(employee_tz).date()
+            punch_local_date = pytz.utc.localize(punch_dt).astimezone(employee_tz).date()
+            is_stale = open_check_in_local_date != punch_local_date
+
+        if open_attendance and not is_stale and punch_dt > open_attendance.check_in:
             open_attendance.write({'check_out': punch_dt, 'device_ref_out': device_ref})
             attendance, state = open_attendance, 'checked_out'
         else:

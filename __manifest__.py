@@ -34,7 +34,7 @@ Features
     ],
     'assets': {
         'web.assets_backend': [
-            'attendance_live_counter/static/src/scss/attendance_dashboard.scss',
+            'attendance_live_counter/static/src/css/attendance_dashboard.css',
             'attendance_live_counter/static/src/js/attendance_timer.js',
             'attendance_live_counter/static/src/xml/attendance_timer.xml',
             'attendance_live_counter/static/src/js/attendance_dashboard.js',

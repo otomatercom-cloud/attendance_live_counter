@@ -16,13 +16,13 @@
 
                 <div class="o_alc_card_header">
                     <div class="o_alc_employee">
-                        <i class="fa fa-user-circle o_alc_employee_icon"/>
+                        <div class="o_alc_avatar"><i class="fa fa-user"/></div>
                         <div class="o_alc_employee_meta">
                             <div class="o_alc_employee_name" t-esc="state.data.employee_name"/>
-                            <div class="o_alc_status_badge">
-                                <span class="o_alc_status_dot"/>
+                            <span t-att-class="'o_alc_stamp o_alc_stamp_' + statusColor">
+                                <span class="o_alc_stamp_dot"/>
                                 <span t-esc="statusLabel"/>
-                            </div>
+                            </span>
                         </div>
                     </div>
                     <div class="o_alc_clock">
@@ -33,17 +33,19 @@
 
                 <div class="o_alc_timer_display">
                     <div class="o_alc_timer_label">Worked Today</div>
-                    <AttendanceTimer
-                        checkIn="state.data.check_in"
-                        checkOut="state.data.check_out"
-                        state="state.data.state"
-                        serverOffsetMs="serverOffsetMs"
-                        size="'lg'"/>
+                    <div class="o_alc_timer_wrap">
+                        <AttendanceTimer
+                            checkIn="state.data.check_in"
+                            checkOut="state.data.check_out"
+                            state="state.data.state"
+                            serverOffsetMs="serverOffsetMs"
+                            size="'lg'"/>
+                    </div>
                 </div>
 
                 <div class="o_alc_progress_wrap">
                     <div class="o_alc_progress_header">
-                        <span>Today's Progress</span>
+                        <span>Today's progress</span>
                         <span t-esc="progressLabel"/>
                     </div>
                     <div class="o_alc_progress_bar">
@@ -87,13 +89,13 @@
 
                 <div class="o_alc_actions" t-if="allowManualCheckin">
                     <button t-if="!isCheckedIn"
-                            class="btn btn-primary o_alc_btn_checkin"
+                            class="o_alc_btn o_alc_btn_checkin"
                             t-att-disabled="state.actionPending"
                             t-on-click="onCheckIn">
                         <i class="fa fa-sign-in"/> Check In
                     </button>
                     <button t-if="isCheckedIn"
-                            class="btn btn-danger o_alc_btn_checkout"
+                            class="o_alc_btn o_alc_btn_checkout"
                             t-att-disabled="state.actionPending"
                             t-on-click="onCheckOut">
                         <i class="fa fa-sign-out"/> Check Out
