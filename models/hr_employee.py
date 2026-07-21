@@ -333,6 +333,29 @@ class HrEmployee(models.Model):
             punch_local_date = pytz.utc.localize(punch_dt).astimezone(employee_tz).date()
             is_stale = open_check_in_local_date != punch_local_date
 
+        if open_attendance and is_stale:
+            # Do NOT create a second simultaneously-open record for this
+            # employee - Odoo's own hr.attendance model flatly forbids
+            # that (a real constraint, not one of ours), which is exactly
+            # what "Cannot create new attendance record... hasn't checked
+            # out since ..." means if this isn't handled here. Silently
+            # fabricating a checkout time for the stale record isn't
+            # right either - that time isn't real data. This employee
+            # already correctly shows "Missed Clock Out" on the
+            # Attendance Exceptions dashboard for the stale day; the
+            # right fix is a human closing it there (Currently Checked
+            # In > Check Out) with a real known time, then re-running a
+            # targeted resync (essl_bridge.py --resync-device ... --from
+            # ... --to ...) to recover this punch and anything after it
+            # that was blocked in the meantime.
+            return {
+                'status': 'error',
+                'message': (
+                    '%s has an unclosed session from %s still open - close it via '
+                    'Attendance Exceptions > Currently Checked In first, then resync.'
+                ) % (self.name, open_check_in_local_date),
+            }
+
         if open_attendance and not is_stale and punch_dt > open_attendance.check_in:
             open_attendance.write({'check_out': punch_dt, 'device_ref_out': device_ref})
             attendance, state = open_attendance, 'checked_out'
