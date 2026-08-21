@@ -27,10 +27,12 @@ Features
     'license': 'LGPL-3',
     'depends': ['hr_attendance', 'hr'],
     'data': [
+        'security/ir.model.access.csv',
         'views/hr_employee_views.xml',
         'views/res_config_settings_views.xml',
         'views/attendance_dashboard_views.xml',
         'views/hr_attendance_backend_views.xml',
+        'views/otm_essl_resync_request_views.xml',
     ],
     'assets': {
         'web.assets_backend': [

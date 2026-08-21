@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="otm_essl_resync_request_view_list" model="ir.ui.view">
+        <field name="name">otm.essl.resync.request.list</field>
+        <field name="model">otm.essl.resync.request</field>
+        <field name="arch" type="xml">
+            <list string="ESSL Resync Requests" decoration-success="state == 'done'" decoration-danger="state == 'error'" decoration-muted="state == 'pending'">
+                <field name="employee_id"/>
+                <field name="device_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="requested_by"/>
+                <field name="requested_date"/>
+                <field name="processed_date"/>
+                <field name="state" widget="badge"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="otm_essl_resync_request_view_form" model="ir.ui.view">
+        <field name="name">otm.essl.resync.request.form</field>
+        <field name="model">otm.essl.resync.request</field>
+        <field name="arch" type="xml">
+            <form string="ESSL Resync Request">
+                <header>
+                    <field name="state" widget="statusbar" statusbar_visible="pending,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="employee_id" readonly="state != 'pending'"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="device_id"/>
+                            <field name="date_from" readonly="state != 'pending'"/>
+                            <field name="date_to" readonly="state != 'pending'"/>
+                        </group>
+                        <group>
+                            <field name="requested_by"/>
+                            <field name="requested_date"/>
+                            <field name="processed_date" invisible="not processed_date"/>
+                        </group>
+                    </group>
+                    <group string="Result" invisible="not result_message">
+                        <field name="result_message" nolabel="1" readonly="1"/>
+                    </group>
+                    <p class="text-muted" invisible="state != 'pending'">
+                        Picked up automatically by the bridge script on its next poll (within
+                        ~15-30 seconds if it's running) - no need to do anything on the server.
+                    </p>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="otm_essl_resync_request_action" model="ir.actions.act_window">
+        <field name="name">Resync Requests</field>
+        <field name="res_model">otm.essl.resync.request</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Request a resync for an employee</p>
+            <p>Picked up automatically by the bridge script on its next poll - no server access needed.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_otm_essl_resync_requests"
+              name="Resync Requests"
+              parent="menu_attendance_live_counter_configuration"
+              action="otm_essl_resync_request_action"
+              sequence="30"/>
+</odoo>

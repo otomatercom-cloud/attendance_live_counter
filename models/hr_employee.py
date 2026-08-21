@@ -377,3 +377,18 @@ class HrEmployee(models.Model):
             })
 
         return {'status': 'ok', 'attendance_id': attendance.id, 'state': state}
+
+    def action_request_essl_resync(self):
+        """Employee-form shortcut: opens a fresh Resync Request pre-filled
+        with this employee - picked up by essl_bridge.py on its next
+        normal poll, no server/terminal access needed.
+        """
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Request Resync',
+            'res_model': 'otm.essl.resync.request',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_employee_id': self.id},
+        }
