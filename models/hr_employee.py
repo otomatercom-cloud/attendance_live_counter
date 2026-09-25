@@ -334,29 +334,37 @@ class HrEmployee(models.Model):
             is_stale = open_check_in_local_date != punch_local_date
 
         if open_attendance and is_stale:
-            # Do NOT create a second simultaneously-open record for this
-            # employee - Odoo's own hr.attendance model flatly forbids
-            # that (a real constraint, not one of ours), which is exactly
-            # what "Cannot create new attendance record... hasn't checked
-            # out since ..." means if this isn't handled here. Silently
-            # fabricating a checkout time for the stale record isn't
-            # right either - that time isn't real data. This employee
-            # already correctly shows "Missed Clock Out" on the
-            # Attendance Exceptions dashboard for the stale day; the
-            # right fix is a human closing it there (Currently Checked
-            # In > Check Out) with a real known time, then re-running a
-            # targeted resync (essl_bridge.py --resync-device ... --from
-            # ... --to ...) to recover this punch and anything after it
-            # that was blocked in the meantime.
-            return {
-                'status': 'error',
-                'message': (
-                    '%s has an unclosed session from %s still open - close it via '
-                    'Attendance Exceptions > Currently Checked In first, then resync.'
-                ) % (self.name, open_check_in_local_date),
-            }
-
-        if open_attendance and not is_stale and punch_dt > open_attendance.check_in:
+            # Do NOT leave this punch unrecorded. Odoo's own hr.attendance
+            # model flatly forbids a second simultaneously-open record for
+            # the same employee (a real core constraint, not one of ours) -
+            # that is exactly what "Cannot create new attendance record...
+            # hasn't checked out since ..." means. So the stale record from
+            # the earlier day is auto-closed with a PLACEHOLDER checkout
+            # (equal to its own check_in, i.e. zero worked hours - never a
+            # fabricated real time) purely to satisfy that constraint, and
+            # flagged is_auto_closed_miss_punch=True so it keeps showing up
+            # everywhere as a Miss Punch / Missed Clock Out exception,
+            # exactly like an unclosed session would - HR still needs to
+            # regularize it with the real time. Today's actual punch is
+            # then recorded as a brand-new check-in below, instead of being
+            # silently dropped until someone manually intervenes.
+            open_attendance.write({
+                'check_out': open_attendance.check_in,
+                'is_auto_closed_miss_punch': True,
+            })
+            _logger.info(
+                'attendance_live_counter: auto-closed stale open attendance %s for '
+                '%s (forgotten checkout on %s) as a Miss Punch so the new punch on '
+                '%s is not blocked.',
+                open_attendance.id, self.name, open_check_in_local_date, punch_local_date,
+            )
+            attendance = Attendance.create({
+                'employee_id': self.id,
+                'check_in': punch_dt,
+                'device_ref_in': device_ref,
+            })
+            state = 'checked_in'
+        elif open_attendance and not is_stale and punch_dt > open_attendance.check_in:
             open_attendance.write({'check_out': punch_dt, 'device_ref_out': device_ref})
             attendance, state = open_attendance, 'checked_out'
         else:
