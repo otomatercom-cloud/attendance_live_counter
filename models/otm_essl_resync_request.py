@@ -19,9 +19,7 @@ class OtmEsslResyncRequest(models.Model):
     """
     _name = 'otm.essl.resync.request'
     _description = 'ESSL Resync Request'
-
     _inherit = ['mail.thread', 'mail.activity.mixin']
-
     _order = 'create_date desc'
 
     name = fields.Char(compute='_compute_name', store=True)

@@ -16,9 +16,6 @@
                             <field name="attendance_device_id"/>
                         </group>
                     </group>
-                    <button type="object" name="action_request_essl_resync"
-                            string="Request Resync" class="btn-secondary"
-                            invisible="not attendance_device_id"/>
                 </page>
             </xpath>
         </field>
