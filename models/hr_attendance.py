@@ -57,12 +57,38 @@ class HrAttendance(models.Model):
              'this record, used to prevent duplicate imports.',
     )
 
-    _sql_constraints = [
-        ('device_ref_in_uniq', 'unique(device_ref_in)',
-         'This check-in punch has already been synced (duplicate device reference).'),
-        ('device_ref_out_uniq', 'unique(device_ref_out)',
-         'This check-out punch has already been synced (duplicate device reference).'),
-    ]
+    # Odoo 19: _sql_constraints is deprecated in favor of models.Constraint
+    # class attributes (logs "Model attribute '_sql_constraints' is no
+    # longer supported" at every load otherwise).
+    _device_ref_in_uniq = models.Constraint(
+        'unique(device_ref_in)',
+        'This check-in punch has already been synced (duplicate device reference).',
+    )
+    _device_ref_out_uniq = models.Constraint(
+        'unique(device_ref_out)',
+        'This check-out punch has already been synced (duplicate device reference).',
+    )
+
+    # --- Miss-punch auto-close marker -------------------------------------
+    # Set when a stale (previous-day) open session gets automatically
+    # closed by _record_device_punch so that the NEXT punch is not blocked.
+    # This is never a real checkout time - it is a placeholder (equal to
+    # check_in, i.e. zero worked hours) that only exists so Odoo's own
+    # "employee already checked in" constraint does not stop the following
+    # day's punch from being recorded. Reporting/exception screens should
+    # treat this exactly like an unclosed session (still a Miss Punch),
+    # not like a normal checkout.
+    is_auto_closed_miss_punch = fields.Boolean(
+        string='Auto-Closed (Miss Punch)',
+        default=False,
+        copy=False,
+        help='True when this record was automatically closed by the system '
+             'because the employee had a forgotten checkout from an earlier '
+             'day and a new punch came in before HR regularized it. The '
+             'check-out time stored here is NOT real - it is a placeholder '
+             'so the next punch would not be blocked. Treat this record as '
+             'a Miss Punch and correct it via Regularize.',
+    )
 
     @api.depends('check_in', 'employee_id')
     def _compute_late_arrival(self):
